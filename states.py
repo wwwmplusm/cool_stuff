@@ -6,6 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 class Onboarding(StatesGroup):
     """Conversation states for new users."""
 
+    first_step = State()
     ask_goals_today = State()
     input_goals = State()
     select_life_area = State()

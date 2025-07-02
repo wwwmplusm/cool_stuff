@@ -45,6 +45,9 @@ async def cmd_start(message: Message, state: Onboarding) -> None:
         "Большинство трекеров отнимают твоё время. Я – чтобы вернуть "
         "его и помочь сделать дела. \u23F3"
     )
+    await state.set_state(Onboarding.first_step)
+
+async def ask_goals_today(message: Message, state: Onboarding) -> None:
     await message.answer(
         "У тебя уже есть цели/планы на сегодня?",
         reply_markup=get_yes_no_keyboard(),
@@ -52,7 +55,7 @@ async def cmd_start(message: Message, state: Onboarding) -> None:
     await state.set_state(Onboarding.ask_goals_today)
 
 
-@dp.message(Onboarding.ask_goals_today, Text("Да"))
+@dp.message(Onboarding.ask_goals_today, Text("Да", "да"))
 async def process_has_goals(message: Message, state: Onboarding) -> None:
     await message.answer(
         "Отлично! Напиши списком или пришли голосовое – я всё сохраню."
@@ -60,7 +63,7 @@ async def process_has_goals(message: Message, state: Onboarding) -> None:
     await state.set_state(Onboarding.input_goals)
 
 
-@dp.message(Onboarding.ask_goals_today, Text("Нет"))
+@dp.message(Onboarding.ask_goals_today, Text("Нет", "нет"))
 async def process_no_goals(message: Message, state: Onboarding) -> None:
     await message.answer(
         "Понимаю. В какой сфере хочешь улучшиться сегодня?",
