@@ -7,16 +7,26 @@ Example:
 from __future__ import annotations
 
 import logging
-from typing import List
+
 
 from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart, Text
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.markdown import hbold
-
+from aiogram.types import Message
 from config import load_config
 from db import Database
 from states import Onboarding
+from typing import List
+
+from keyboards import (
+    get_yes_no_keyboard,
+    get_life_areas_keyboard,
+    add_rem_keyboard,
+    get_goals_keyboard,
+    get_back_keyboard,
+    get_daily_rules_keyboard,
+    example_keyboard
+)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -27,11 +37,6 @@ bot = Bot(cfg.bot_token)
 dp = Dispatcher()
 
 
-def goals_keyboard(goals: List[str]) -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=g)] for g in goals],
-        resize_keyboard=True,
-    )
 
 
 @dp.message(CommandStart())
@@ -42,10 +47,7 @@ async def cmd_start(message: Message, state: Onboarding) -> None:
     )
     await message.answer(
         "У тебя уже есть цели/планы на сегодня?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="Да"), KeyboardButton(text="Нет")]],
-            resize_keyboard=True,
-        ),
+        reply_markup=get_yes_no_keyboard(),
     )
     await state.set_state(Onboarding.ask_goals_today)
 
@@ -62,22 +64,7 @@ async def process_has_goals(message: Message, state: Onboarding) -> None:
 async def process_no_goals(message: Message, state: Onboarding) -> None:
     await message.answer(
         "Понимаю. В какой сфере хочешь улучшиться сегодня?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Здоровье"),
-                    KeyboardButton(text="Карьера"),
-                    KeyboardButton(text="Деньги"),
-                ],
-                [
-                    KeyboardButton(text="Отношения"),
-                    KeyboardButton(text="Ум"),
-                    KeyboardButton(text="Дом/пространство"),
-                ],
-                [KeyboardButton(text="Другое")],
-            ],
-            resize_keyboard=True,
-        ),
+        reply_markup=get_life_areas_keyboard(),
     )
     await state.set_state(Onboarding.select_life_area)
 
@@ -100,10 +87,7 @@ async def select_area(message: Message, state: Onboarding) -> None:
     await message.answer(
         f"Пример действия для «{area}»: …  Напиши свою конкретику "
         "или нажми «Назад».",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="Назад")]],
-            resize_keyboard=True,
-        ),
+        reply_markup=get_back_keyboard(),
     )
     await state.set_state(Onboarding.suggest_example_goal)
 
@@ -125,16 +109,7 @@ async def summary_goals(message: Message, state: Onboarding) -> None:
     goals_list = "\n".join(f"- {hbold(g)}" for g in goals)
     await message.answer(
         f"Твой план на сегодня:\n{goals_list}\nВсё верно?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="➕ Добавить"),
-                    KeyboardButton(text="✂️ Убрать"),
-                ],
-                [KeyboardButton(text="✅ Всё ок")],
-            ],
-            resize_keyboard=True,
-        ),
+        reply_markup=add_rem_keyboard()
     )
     await state.set_state(Onboarding.summary_goals)
 
@@ -151,7 +126,7 @@ async def summary_remove(message: Message, state: Onboarding) -> None:
     goals = data.get("goals", [])
     await message.answer(
         "Отметь, что убрать:",
-        reply_markup=goals_keyboard(goals),
+        reply_markup=get_goals_keyboard(goals),
     )
     await state.set_state(Onboarding.remove_goals)
 
@@ -161,10 +136,7 @@ async def summary_ok(message: Message, state: Onboarding) -> None:
     await message.answer(
         "Отличный план! Помни: цель без действия — мечта. В течение дня "
         "присылай мне голосом/текстом, как всё идёт. ✔️",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="Это как?")]],
-            resize_keyboard=True,
-        ),
+        reply_markup=get_daily_rules_keyboard(),
     )
     await state.set_state(Onboarding.daily_rules)
 
@@ -184,15 +156,7 @@ async def ask_example(message: Message, state: Onboarding) -> None:
     await message.answer(
         "Смотри: днём ты шлёшь заметки. Вечером нажимаешь «Подвести итог» "
         "— я дам полный отчёт. Хочешь пример?",
-        reply_markup=ReplyKeyboardMarkup(
-            keyboard=[
-                [
-                    KeyboardButton(text="Давай!"),
-                    KeyboardButton(text="Уже хочу начинать!"),
-                ]
-            ],
-            resize_keyboard=True,
-        ),
+        reply_markup=example_keyboard(),
     )
     await state.set_state(Onboarding.explain_logging)
 

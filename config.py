@@ -1,19 +1,13 @@
-"""Configuration utilities for the Telegram bot.
 
-Usage:
-    from config import load_config
-    cfg = load_config()
-    print(cfg.bot_token)
-"""
 from dataclasses import dataclass
 import os
 
 
 @dataclass
 class Config:
-    """Basic application settings."""
 
     bot_token: str
+    api_id: str
     db_path: str = "all.db"
 
 
@@ -27,5 +21,6 @@ def load_config() -> Config:
 
     return Config(
         bot_token=os.getenv("BOT_API", ""),
+        api_id=os.getenv("OPENAI_API_KEY", ""),
         db_path=os.getenv("DB_PATH", "all.db"),
     )
