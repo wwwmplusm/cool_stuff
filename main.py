@@ -9,10 +9,14 @@ from __future__ import annotations
 import logging
 
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Text
 from aiogram.utils.markdown import hbold
 from aiogram.types import Message
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from src.services.voice_service import transcribe_audio
 from config import load_config
 from db import Database
 from states import Onboarding
@@ -76,6 +80,21 @@ async def process_no_goals(message: Message, state: Onboarding) -> None:
 async def input_goals(message: Message, state: Onboarding) -> None:
     goals_text = message.text or ""
     goals = [g.strip() for g in goals_text.split("\n") if g.strip()]
+    data = await state.get_data()
+    stored_goals: List[str] = data.get("goals", [])
+    stored_goals.extend(goals)
+    await state.update_data(goals=stored_goals)
+    await summary_goals(message, state)
+
+
+@dp.message(Onboarding.input_goals, F.voice)
+async def input_goals_voice(message: Message, state: Onboarding) -> None:
+    """Handle voice messages with user goals."""
+    with TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / f"{message.voice.file_id}.ogg"
+        await message.voice.download(destination=path)
+        text = await transcribe_audio(str(path))
+    goals = [g.strip() for g in text.split("\n") if g.strip()]
     data = await state.get_data()
     stored_goals: List[str] = data.get("goals", [])
     stored_goals.extend(goals)
